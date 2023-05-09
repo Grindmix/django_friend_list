@@ -73,6 +73,9 @@ class TestFriendshipRequests(APITestCase):
         else:
             return reverse('list-user-friend-requests', kwargs={'pk': path})
         
+    def get_relationship_status_url(self, path, query):
+        return f"%s?user_id={query}" % reverse('get-relationship-status', kwargs={'pk': path})
+        
     def test_send_friend_request(self):
         # Send friend request
         response = self.send_friend_request(self.user_id_1, self.user_id_2)
@@ -207,3 +210,36 @@ class TestFriendshipRequests(APITestCase):
         url = self.get_user_friend_requests_list_url(self.user_id_1, 'invalid')
         response = self.client.get(url)
         self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_relationship_status(self):
+        self.send_friend_request(self.user_id_1, self.user_id_2)
+        self.send_friend_request(self.user_id_3, self.user_id_1)
+
+        url = self.get_relationship_status_url(self.user_id_1, self.user_id_2)
+        response = self.client.get(url)
+        self.assertEqual(response.data, {"message": f"You sent {self.user_id_2} a friend request"})
+
+        url = self.get_relationship_status_url(self.user_id_1, self.user_id_3)
+        response = self.client.get(url)
+        self.assertEqual(response.data, {"message": f"User {self.user_id_3} sent you friend request"})
+
+        url = self.get_relationship_status_url(self.user_id_1, self.user_id_4)
+        response = self.client.get(url)
+        self.assertEqual(response.data, {"message": f"You and {self.user_id_4} are now friends"})  
+
+        url = self.get_relationship_status_url(self.user_id_1, self.user_id_5)
+        response = self.client.get(url)
+        self.assertEqual(response.data, {"message": f"Nothing connects you and {self.user_id_5} at the moment."})
+
+        random_id = uuid4()
+        url = self.get_relationship_status_url(self.user_id_1, random_id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        url = self.get_relationship_status_url(random_id, self.user_id_1)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        url = self.get_relationship_status_url(self.user_id_1, 'invalid')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

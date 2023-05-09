@@ -170,3 +170,30 @@ class UserFriendRequestsView(ListAPIView):
                 query_param_filter = 'any friend requests'
             return Response({"message": f"This user doesn't have {query_param_filter}."})
         return Response(data=serializer.data)
+    
+
+class GetUserRelationshipStatusView(RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserModelSerializer
+
+    @extend_schema(parameters=[UUIDFieldRequestSerializer])
+    def get(self, request, *args, **kwargs):
+        query_param_user_id = request.query_params.get('user_id')
+        if query_param_user_id == None:
+            return Response({"message": "Query param user_id is empty"}, status=status.HTTP_400_BAD_REQUEST)
+        user_object = self.get_object()
+        serializer = UUIDFieldRequestSerializer(data={'user_id': query_param_user_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            relationship_with = self.queryset.get(pk=query_param_user_id)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        if Requests.objects.filter(from_user=user_object.id, to_user=relationship_with.id):
+            return Response({"message": f"You sent {relationship_with.id} a friend request"})
+        elif Requests.objects.filter(from_user=relationship_with.id, to_user=user_object.id):
+            return Response({"message": f"User {relationship_with.id} sent you friend request"})
+        elif user_object.friend_list.filter(id=relationship_with.id):
+            return Response({"message": f"You and {relationship_with.id} are now friends"})
+        return Response({"message": f"Nothing connects you and {relationship_with.id} at the moment."})

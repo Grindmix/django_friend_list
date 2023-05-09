@@ -1,6 +1,7 @@
 from django.urls import path
 from friend_list_service import views
 
+
 urlpatterns = [
     path('', views.api_root),
     path('register/', views.UserCreateView.as_view(), name='user-create'),
@@ -13,4 +14,6 @@ urlpatterns = [
     path('list_friend_requests/all/', views.AllFriendRequstsListView.as_view(), name='list-requests'),
     path('list_friend_requests/user/<pk>/', views.UserFriendRequestsView.as_view(), name='list-user-friend-requests'),
     path('delete_friend/<pk>/', views.DeleteFriendFromFriendlistView.as_view(), name='delete-friend'),
+    path('user_relationship_status/<pk>', views.GetUserRelationshipStatusView.as_view(), name='get-relationship-status'),
+    path('user_friendlist/<pk>/', views.UserFriendlistOnlyView.as_view(), name='only-user-friendlist'),
 ]

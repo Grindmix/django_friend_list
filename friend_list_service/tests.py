@@ -95,3 +95,41 @@ class TestFriendshipRequests(APITestCase):
 
         response = self.send_friend_request('invalid', 'invalid')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_accept_or_reject_friend_request(self):
+        url = reverse('send-friend-request')
+        friend_requests = []
+        response = self.send_friend_request(self.user_id_1, self.user_id_2)
+        friend_requests.append(response.data['id'])
+
+        response = self.send_friend_request(self.user_id_1, self.user_id_3)
+        friend_requests.append(response.data['id'])
+
+        # Test accept request
+        url = reverse('accept-or-reject-friend-request', kwargs={'pk': friend_requests[0]})
+        body = {'action': 'accept'}
+        response = self.client.post(url, body)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        url = reverse('request-detail', kwargs={'pk': friend_requests[0]})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Test invalid parametrs passed into action field
+        url = reverse('accept-or-reject-friend-request', kwargs={'pk': friend_requests[1]})
+        body['action'] = 'invalid'
+        response = self.client.post(url, body)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        body['action'] = ''
+        response = self.client.post(url, body)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Test reject friend request
+        body['action'] = 'reject'
+        response = self.client.post(url, body)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        url = reverse('request-detail', kwargs={'pk': friend_requests[1]})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

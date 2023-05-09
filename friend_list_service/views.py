@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.fields import CharField
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView
 from drf_spectacular.utils import extend_schema, inline_serializer
 
 from friend_list_service.serializers import *
@@ -79,3 +79,35 @@ class SendFriendRequestView(CreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AllFriendRequstsListView(ListAPIView):
+    queryset = Requests.objects.all()
+    serializer_class = RequestsHyperlinkSerializer
+
+
+class FriendRequestDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Requests.objects.all()
+    serializer_class = RequestsModelSerializer
+
+
+class AcceptOrRejectFriendRequestView(GenericAPIView):
+    queryset = Requests.objects.all()
+    serializer_class = AcceptOrRejectSerializer
+
+    VALID = ['accept', 'reject']
+
+    def post(self, request, *args, **kwargs):
+        friend_request_object = self.get_object()
+        if 'action' not in request.data or not isinstance(request.data['action'], str):
+            return Response({'message': 'Request body must contain action field'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not request.data['action'].lower() in self.VALID:
+            return Response({'message': '"action" must be: accept or reject'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.data['action'].lower() == 'accept':
+            user_list = accept_friend_request(friend_request_object)
+            return Response({'message': f'{user_list[0].data["username"]} and {user_list[1].data["username"]} are now friends!'})
+        
+        friend_request_object.delete()
+        return Response({"message": "Friend request has been rejected and deleted"})

@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'friends',
+    'friend_list_service',
     'drf_spectacular',
 ]
 

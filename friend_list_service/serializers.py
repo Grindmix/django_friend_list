@@ -12,6 +12,12 @@ class UserModelSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'friend_list')
 
 
+class UserFriendListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'friend_list')
+
+
 class RequestsModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Requests

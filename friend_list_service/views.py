@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.fields import CharField
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView
-from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView, GenericAPIView
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 
 from friend_list_service.serializers import *
 from friend_list_service.utils import accept_friend_request
@@ -25,6 +25,11 @@ class UserListView(ListAPIView):
 class UserDetailView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserHyperlinkSerializer
+
+
+class UserFriendlistOnlyView(RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserFriendListSerializer
 
 
 class UserDetailByUsernameView(RetrieveUpdateDestroyAPIView):
@@ -134,3 +139,34 @@ class DeleteFriendFromFriendlistView(GenericAPIView):
                 return Response({'message': f'{pk} and {friend_to_delete.id} not even friends right now.'}, status=status.HTTP_409_CONFLICT)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class UserFriendRequestsView(ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = RequestsHyperlinkSerializer
+
+    VALID = ['incoming_requests', 'outcoming_requests']
+
+    @extend_schema(parameters=[OpenApiParameter('filter', required=False, enum=VALID)])
+    def get(self, request, *args, **kwargs):
+        user_object = self.get_object()
+        query_param_filter = request.query_params.get('filter')
+        serializer_context = {'request': request,}
+        if query_param_filter not in self.VALID and query_param_filter != None:
+            return Response({"message": f"filter query parameter not valid (your is: {query_param_filter})"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if query_param_filter == None:
+            filter_result = user_object.incoming_requests.all() | user_object.outcoming_requests.all()
+
+        elif query_param_filter == self.VALID[0]:
+            filter_result = user_object.incoming_requests.all()
+
+        elif query_param_filter == self.VALID[1]:
+            filter_result = user_object.outcoming_requests.all()
+
+        serializer = self.serializer_class(filter_result, many=True, context=serializer_context)
+        if serializer.data == []:
+            if query_param_filter == None:
+                query_param_filter = 'any friend requests'
+            return Response({"message": f"This user doesn't have {query_param_filter}."})
+        return Response(data=serializer.data)

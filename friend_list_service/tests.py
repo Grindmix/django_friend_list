@@ -66,6 +66,12 @@ class TestFriendshipRequests(APITestCase):
         }
         response = self.client.post(url, body)
         return response
+    
+    def get_user_friend_requests_list_url(self, path, query=None):
+        if query in ['incoming_requests', 'outcoming_requests', 'invalid']:
+            return f"%s?filter={query}" % reverse('list-user-friend-requests', kwargs={'pk': path})
+        else:
+            return reverse('list-user-friend-requests', kwargs={'pk': path})
         
     def test_send_friend_request(self):
         # Send friend request
@@ -111,7 +117,7 @@ class TestFriendshipRequests(APITestCase):
         response = self.client.post(url, body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        url = reverse('request-detail', kwargs={'pk': friend_requests[0]})
+        url = reverse('requests-detail', kwargs={'pk': friend_requests[0]})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -130,7 +136,7 @@ class TestFriendshipRequests(APITestCase):
         response = self.client.post(url, body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        url = reverse('request-detail', kwargs={'pk': friend_requests[1]})
+        url = reverse('requests-detail', kwargs={'pk': friend_requests[1]})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -166,3 +172,38 @@ class TestFriendshipRequests(APITestCase):
         url = reverse('delete-friend', kwargs={'pk': uuid4})
         response = self.client.put(url, body)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_user_request_list(self):
+        incoming_request = self.send_friend_request(self.user_id_2, self.user_id_1).data['id']
+        outcoming_request = self.send_friend_request(self.user_id_1, self.user_id_3).data['id']
+
+        # Incoming and Outcoming friend requests
+        url = self.get_user_friend_requests_list_url(self.user_id_1)
+        response = self.client.get(url)
+        self.assertContains(response, incoming_request)
+        self.assertContains(response, outcoming_request)
+
+        # Incoming only
+        url = self.get_user_friend_requests_list_url(self.user_id_1, 'incoming_requests')
+        response = self.client.get(url)
+        self.assertContains(response, incoming_request)
+        self.assertNotContains(response, outcoming_request)
+
+        # Outcoming only
+        url = self.get_user_friend_requests_list_url(self.user_id_1, 'outcoming_requests')
+        response = self.client.get(url)
+        self.assertNotContains(response, incoming_request)
+        self.assertContains(response, outcoming_request)
+
+        # Invalid
+        url = self.get_user_friend_requests_list_url(uuid4(), 'outcoming_requests')
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        url = self.get_user_friend_requests_list_url('invalid', 'outcoming_requests')
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        url = self.get_user_friend_requests_list_url(self.user_id_1, 'invalid')
+        response = self.client.get(url)
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -14,6 +14,8 @@
 
 - `cd django_friend_list`
 
+- `pip install -r requirements.txt`
+
 - `python manage.py migrate`
 
 ### Запустить тестовый сервер:

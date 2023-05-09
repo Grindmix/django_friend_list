@@ -25,7 +25,7 @@
 ---
 ## ER диаграмма
 
-[erd.jpg](./erd.jpg "erd")
+![erd.jpg](./erd.jpg "erd")
 
 ---
 ## Документация

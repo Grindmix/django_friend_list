@@ -2,6 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.reverse import reverse
 from rest_framework import status
 from friend_list_service.models import *
+from uuid import uuid4
 
 
 class TestUserCreate(APITestCase):
@@ -43,3 +44,54 @@ class TestUserCRUD(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestFriendshipRequests(APITestCase):
+
+    def setUp(self):
+        self.user_id_1 = User.objects.create(username='Dummy1').id
+        self.user_id_2 = User.objects.create(username='Dummy2').id
+        self.user_id_3 = User.objects.create(username='Dummy3').id
+        self.user_id_4 = User.objects.create(username='Dummy4').id # friend of Dummy1
+        self.user_id_5 = User.objects.create(username='Dummy5').id
+
+        User.objects.get(pk=self.user_id_1).friend_list.add(User.objects.get(pk=self.user_id_4))
+
+
+    def send_friend_request(self, from_user, to_user):
+        url = reverse('send-friend-request')
+        body = {
+            'from_user': from_user,
+            'to_user': to_user
+        }
+        response = self.client.post(url, body)
+        return response
+        
+    def test_send_friend_request(self):
+        # Send friend request
+        response = self.send_friend_request(self.user_id_1, self.user_id_2)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Repeating request
+        response = self.send_friend_request(self.user_id_1, self.user_id_2)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+        # User fields are equal
+        response = self.send_friend_request(self.user_id_1, self.user_id_1)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Test auto-accept same friend request
+        response = self.send_friend_request(self.user_id_2, self.user_id_1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"message": f"The same request already existed and was successfully accepted."})
+
+        # Test sending request to a friend
+        response = self.send_friend_request(self.user_id_1, self.user_id_2)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+        # Invalid
+        response = self.send_friend_request(uuid4(), uuid4())
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.send_friend_request('invalid', 'invalid')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -10,3 +10,9 @@ class UserModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'friend_list')
+
+
+class RequestsModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Requests
+        fields = ('id', 'from_user', 'to_user')

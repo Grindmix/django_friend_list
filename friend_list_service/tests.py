@@ -133,3 +133,36 @@ class TestFriendshipRequests(APITestCase):
         url = reverse('request-detail', kwargs={'pk': friend_requests[1]})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_friend(self):
+        url = reverse('delete-friend', kwargs={'pk': self.user_id_1})
+        
+        # Test invalid body
+        body = {}
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'message': 'Request body must contain user_id field'})
+
+        body = {
+            'user_id': '1231231231'
+        }
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        body['user_id'] = uuid4()
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Test delete friend
+        body['user_id'] = self.user_id_4
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Trying to remove non-friend from friendlist
+        body['user_id'] = self.user_id_3
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+        url = reverse('delete-friend', kwargs={'pk': uuid4})
+        response = self.client.put(url, body)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

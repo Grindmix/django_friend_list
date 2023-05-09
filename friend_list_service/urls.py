@@ -11,4 +11,5 @@ urlpatterns = [
     path('request_detail/<pk>/', views.FriendRequestDetailView.as_view(), name='request-detail'),
     path('accept_or_reject_request/<pk>/', views.AcceptOrRejectFriendRequestView.as_view(), name='accept-or-reject-friend-request'),
     path('list_friend_requests/all/', views.AllFriendRequstsListView.as_view(), name='list-requests'),
+    path('delete_friend/<pk>/', views.DeleteFriendFromFriendlistView.as_view(), name='delete-friend'),
 ]

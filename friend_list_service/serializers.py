@@ -36,3 +36,7 @@ class AcceptOrRejectSerializer(serializers.Serializer):
     
     choices = {'accept': 'accept', 'reject': 'reject'}
     action = serializers.ChoiceField(choices=choices)
+
+
+class UUIDFieldRequestSerializer(serializers.Serializer):
+    user_id = serializers.UUIDField()

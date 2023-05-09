@@ -111,3 +111,26 @@ class AcceptOrRejectFriendRequestView(GenericAPIView):
         
         friend_request_object.delete()
         return Response({"message": "Friend request has been rejected and deleted"})
+    
+
+class DeleteFriendFromFriendlistView(GenericAPIView):
+    queryset = User.objects.all()
+    serializer_class = UUIDFieldRequestSerializer
+
+    @extend_schema(request=UUIDFieldRequestSerializer)
+    def put(self, request, pk, *args, **kwargs):
+        if 'user_id' not in request.data or not isinstance(request.data['user_id'], str):
+            return Response({'message': 'Request body must contain user_id field'},status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = self.get_object()
+        try:
+            friend_to_delete = self.queryset.get(pk=request.data['user_id'])
+            if user.friend_list.filter(pk=friend_to_delete.id).exists():
+                user.friend_list.remove(friend_to_delete)
+                return Response({'message': f'{pk} and {friend_to_delete.id} no longer friends :('}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': f'{pk} and {friend_to_delete.id} not even friends right now.'}, status=status.HTTP_409_CONFLICT)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)

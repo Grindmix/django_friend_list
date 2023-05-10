@@ -8,7 +8,7 @@
 
 - `cd env`
 
-- `Scripts\activate`
+- `Scripts\activate` или `bin\activate`
 
 - `git clone https://github.com/Grindmix/django_friend_list.git`
 

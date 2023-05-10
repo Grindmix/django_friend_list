@@ -15,6 +15,8 @@ def api_root(request, format=None):
     return Response({
         'user-list': reverse('user-list', request=request, format=format),
         'user-create': reverse('user-create', request=request, format=format),
+        'all-friend-requests-list': reverse('list-requests', request=request, format=format),
+        'send-friend-request': reverse('send-friend-request', request=request, format=format),
     })
 
 class UserListView(ListAPIView):
@@ -68,8 +70,6 @@ class SendFriendRequestView(CreateAPIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            # find_similar_request = self.queryset.filter(from_user)
-
             if User.objects.get(pk=request.data['from_user']).outcoming_requests.filter(to_user=request.data['to_user']).exists():
                 return Response({"message": "You already sent this request"}, status.HTTP_409_CONFLICT)
             

@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  web:
+    build: ./django_friend_list
+    command: sh -c 'python manage.py migrate && python manage.py runserver 0.0.0.0:8000'
+    volumes:
+      - ./django_friend_list/:/usr/src/app/
+    ports:
+      - 8000:8000

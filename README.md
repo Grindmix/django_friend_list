@@ -18,11 +18,20 @@
 
 - `python manage.py migrate`
 
-### Запустить тестовый сервер:
-- `python manage.py runserver`
+- Запустить тестовый сервер: `python manage.py runserver`
 
-### Запустить тесты:
-- `python manage.py test`
+- Запустить тесты: `python manage.py test`
+
+
+### Через Docker compose:
+
+- `git clone https://github.com/Grindmix/django_friend_list.git`
+
+- `cd django_friend_list`
+
+- `docker compose run`
+
+- Запустить тесты: `docker compose run web python manage.py test`
 
 ---
 ## ER диаграмма
@@ -40,7 +49,7 @@
 
 ## Эндпоинты
 
-### CRUD Полльзоветелей
+### CRUD Пользоветелей
 * Создать нового пользователя: `POST /api/register/`
     - Тело запроса:
     ```json

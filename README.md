@@ -29,7 +29,7 @@
 
 - `cd django_friend_list`
 
-- `docker compose run`
+- `docker compose up`
 
 - Запустить тесты: `docker compose run web python manage.py test`
 

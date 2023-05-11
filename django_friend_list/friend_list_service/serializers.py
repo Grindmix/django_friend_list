@@ -24,12 +24,6 @@ class RequestsModelSerializer(serializers.ModelSerializer):
         fields = ('id', 'from_user', 'to_user')
 
 
-class RequestsModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Requests
-        fields = ('id', 'from_user', 'to_user')
-
-
 class RequestsHyperlinkSerializer(serializers.HyperlinkedModelSerializer):
     accept_or_reject = serializers.HyperlinkedIdentityField(view_name='accept-or-reject-friend-request', read_only=True)
 

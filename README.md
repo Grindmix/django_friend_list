@@ -81,6 +81,14 @@
 
     - Параметр query string user_id это id пользователя с которым нужно проверить статус дружбы и он обязателен.
 
+* Удалить пользователя из списка друзей пользователя по id: `PUT api/delete_friend/{id}/`
+    - Тело запроса:
+    ```json
+    {
+        "user_id": "UUID"
+    }
+    ```
+
 ### CRUD Запросов в друзья
 * Получить список всех запросов от всех пользователей: `GET api/list_friend_requests/all/`
 * Получить список запросов определенного пользователя: `GET api/list_friend_requests/user/{id}?filter=(incoming_requests, outcoming_requests)`
